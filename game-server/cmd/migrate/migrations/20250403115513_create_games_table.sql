@@ -4,6 +4,8 @@ CREATE TABLE IF NOT EXISTS games (
     hectoc_puzzle CHAR(6) NOT NULL CHECK (hectoc_puzzle ~ '^[0-9]{6}$'),
     winner_id BIGINT,
     winning_submission TEXT,
+    correct_solution TEXT,
+    game_state VARCHAR(11) NOT NULL CHECK (game_state IN ('waiting', 'in_progress', 'completed')),
     created_at TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now()
 );
 -- +goose StatementBegin

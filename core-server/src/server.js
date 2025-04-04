@@ -20,6 +20,7 @@ import app from "./app.js";
 import conf from "./config/config.js";
 import { WebSocketServer } from "ws";
 
+
 const httpServer = app.listen(conf.port, () => {
 	console.log(`Server is listening on port ${conf.port}.`);
 });

@@ -1,4 +1,4 @@
-import getDBConnection from "../utils/dbPool";
+import getDBConnection from "../utils/dbPool.js";
 
 // Create User 
 const createUser = async (username, email, age, profilePic = null, currentRating = 400) => {

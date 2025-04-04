@@ -1,5 +1,7 @@
-import { Pool } from "pg";
+import pg from "pg";
 import conf from "./config.js";
+
+const {Pool} = pg;
 
 const pool = new Pool({
   host: conf.dbHost,

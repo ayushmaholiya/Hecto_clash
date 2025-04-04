@@ -23,5 +23,5 @@ export default {
   DB_ACQUIRE_TIMEOUT,
   DB_IDLE_TIMEOUT,
   QUERY_TIMEOUT,
-  DEFAULT_PROFILE_PIC,
+  defaultProfilePic,
 };

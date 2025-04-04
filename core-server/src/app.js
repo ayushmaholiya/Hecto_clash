@@ -29,7 +29,7 @@ app.use(cors());
 
 // importing routes
 import userRoutes from "./routes/user.js";
-import leaderBoardRoutes from "./routes/leaderboard.js";
+//import leaderBoardRoutes from "./routes/leaderboard.js";
 
 // declaring routes
 app.use("/api/v1/user", userRoutes);

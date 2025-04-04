@@ -13,3 +13,8 @@ type Player struct {
 	Username 	string 			`json:"username"`
 	mu 			sync.Mutex 		`json:"-"`
 }
+
+var (
+	Players = make(map[string]*Player)
+	PlayersMu sync.RWMutex
+)

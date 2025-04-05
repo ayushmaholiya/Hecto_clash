@@ -32,7 +32,7 @@ const (
 
 type Message struct {
 	Type      MessageType `json:"type"`
-	Content   interface{} `json:"content"`
+	Content   any `json:"content"`
 	RoomID    string      `json:"roomId"`
 	SenderID  string      `json:"senderId"`
 }

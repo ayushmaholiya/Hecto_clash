@@ -5,21 +5,26 @@ import "github.com/eclairjit/hecto-clash-hf/game-server/pkg/hectoc"
 type Room struct {
 	ID      string             `json:"id"`
 	Clients map[string]*Client `json:"clients"`
+    Puzzle  *hectoc.Hectoc     `json:"puzzle"`
 }
 
 type Hub struct {
-	Rooms      map[string]*Room
-	Register   chan *Client
-	Unregister chan *Client
-	Broadcast  chan *Message
+	Rooms       map[string]*Room
+	Register    chan *Client
+	Unregister  chan *Client
+	Broadcast   chan *Message
+    OnRoomEmpty func(roomID string)
+    OnPuzzleCreated func(roomID string, puzzle *hectoc.Hectoc)
 }
 
-func NewHub() *Hub {
+func NewHub(onRoomEmpty func(roomID string), onPuzzleCreated func(roomID string, puzzle *hectoc.Hectoc)) *Hub {
 	return &Hub{
 		Rooms:      make(map[string]*Room),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 		Broadcast:  make(chan *Message, 5),
+        OnRoomEmpty: onRoomEmpty,
+        OnPuzzleCreated: onPuzzleCreated,
 	}
 }
 
@@ -43,6 +48,7 @@ func (h *Hub) Run() {
 
                 // Add the client to the room
                 room.Clients[cl.ID] = cl
+
                 cl.Message <- &Message{
                     Type:     MESSAGE_TYPE_JOIN_SUCCESS,
                     Content:  "Joined the room successfully",
@@ -52,6 +58,12 @@ func (h *Hub) Run() {
                 if len(room.Clients) == 2 {
                     // assign a puzzle to the clients
                     hectocSeq := hectoc.Generate()
+
+                    room.Puzzle = hectocSeq
+
+                    if h.OnPuzzleCreated != nil {
+                        h.OnPuzzleCreated(cl.RoomID, hectocSeq)
+                    }
 
                     for _, client := range room.Clients {
                         client.Message <- &Message{
@@ -95,6 +107,11 @@ func (h *Hub) Run() {
                     if len(room.Clients) == 0 {
                         // If the room is empty, delete it
                         delete(h.Rooms, cl.RoomID)
+
+                        if h.OnRoomEmpty != nil {
+                            h.OnRoomEmpty(cl.RoomID)
+                        }
+
                     } else {
                        // Notify the remaining client that the other client has left
                        for _, remainingClient := range room.Clients {

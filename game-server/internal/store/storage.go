@@ -21,11 +21,16 @@ type Storage struct {
 		CreatePuzzle(context.Context, int64, *hectoc.Hectoc) error
 		UpdateWinnerDetails(context.Context, *Game) error
 	}
+
+	Submissions interface {
+		Create(context.Context, *SubmissionStruct) error
+	}
 }
 
 func NewStorage(db *sql.DB) Storage {
 	return Storage {
 		Players: &PlayerStore{db},
 		Games: &GameStore{db},
+		Submissions: &SubmissionStore{db},
 	}
 }

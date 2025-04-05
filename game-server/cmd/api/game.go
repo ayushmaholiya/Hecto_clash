@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -36,8 +35,6 @@ func (app *application) joinRoomHandler(w http.ResponseWriter, r *http.Request) 
 		writeJSONError(w, http.StatusNotFound, "room not found")
 		return
 	}
-
-	fmt.Println("roomID", roomID)
 
 	playerID, err := strconv.ParseInt(clientID, 10, 64)
 

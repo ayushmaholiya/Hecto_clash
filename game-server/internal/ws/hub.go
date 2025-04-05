@@ -1,6 +1,9 @@
 package ws
 
-import "github.com/eclairjit/hecto-clash-hf/game-server/pkg/hectoc"
+import (
+	"github.com/eclairjit/hecto-clash-hf/game-server/internal/store"
+	"github.com/eclairjit/hecto-clash-hf/game-server/pkg/hectoc"
+)
 
 type Room struct {
 	ID      string             `json:"id"`
@@ -15,9 +18,10 @@ type Hub struct {
 	Broadcast   chan *Message
     OnRoomEmpty func(roomID string)
     OnPuzzleCreated func(roomID string, puzzle *hectoc.Hectoc)
+    OnSubmission func(roomID string, submission *store.SubmissionStruct)
 }
 
-func NewHub(onRoomEmpty func(roomID string), onPuzzleCreated func(roomID string, puzzle *hectoc.Hectoc)) *Hub {
+func NewHub(onRoomEmpty func(roomID string), onPuzzleCreated func(roomID string, puzzle *hectoc.Hectoc), onSubmission func(roomID string, submission *store.SubmissionStruct)) *Hub {
 	return &Hub{
 		Rooms:      make(map[string]*Room),
 		Register:   make(chan *Client),
@@ -25,6 +29,7 @@ func NewHub(onRoomEmpty func(roomID string), onPuzzleCreated func(roomID string,
 		Broadcast:  make(chan *Message, 5),
         OnRoomEmpty: onRoomEmpty,
         OnPuzzleCreated: onPuzzleCreated,
+        OnSubmission: onSubmission,
 	}
 }
 

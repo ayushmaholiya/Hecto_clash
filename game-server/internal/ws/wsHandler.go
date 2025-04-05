@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 
+	"github.com/eclairjit/hecto-clash-hf/game-server/internal/store"
 	"github.com/eclairjit/hecto-clash-hf/game-server/pkg/hectoc"
 	"github.com/gorilla/websocket"
 )
@@ -119,9 +121,31 @@ func (h *Hub) handleSubmission(c *Client, msg Message) {
 			return
 		}
 
+		playerID, err := strconv.ParseInt(c.ID, 10, 64)
+
+		if err != nil {
+			c.Message <- &Message{
+				Type:    MESSAGE_TYPE_ERROR,
+				Content: "Invalid player ID.",
+				RoomID:  msg.RoomID,
+			}
+			return
+		}
+
+		submission := &store.SubmissionStruct{
+			PlayerID:   playerID,
+			Submission: submittedSeq,
+		}
+
 		verified, err := hectoc.Verify(msg.Content.(string))
 
 		if verified {
+			submission.IsCorrect = true
+
+			if h.OnSubmission != nil {
+				h.OnSubmission(msg.RoomID, submission)
+			}
+
 			// Notify both users and end the game
 			for _, cl := range room.Clients {
 				cl.Message <- &Message{
@@ -140,6 +164,12 @@ func (h *Hub) handleSubmission(c *Client, msg Message) {
 				RoomID: msg.RoomID,
 			}
 		} else {
+			submission.IsCorrect = false
+			
+			if h.OnSubmission != nil {
+				h.OnSubmission(msg.RoomID, submission)
+			}
+
 			// Notify only the submitting user
 			c.Message <- &Message{
 				Type:    MESSAGE_TYPE_WRONG_SUBMISSION,

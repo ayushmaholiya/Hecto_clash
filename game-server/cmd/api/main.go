@@ -65,14 +65,11 @@ func main() {
 
 		log.Println("Redis connection established.")
 	}
-
-	store := store.NewStorage(db)
 	
-
 	app := &application{
 		config: cfg,
 		cacheStorage: cache.NewRedisStorage(rdb),
-		store: store,
+		store: store.NewStorage(db),
 	}
 
 	hub := ws.NewHub(func (roomID string) {
@@ -102,7 +99,31 @@ func main() {
 		} else {
 			log.Printf("Set room %s in Redis\n", roomID)
 		}
-	})
+	},
+	func(roomID string, submission *store.SubmissionStruct) {
+		ctx := context.Background()
+
+		gameID, err := app.cacheStorage.Games.Get(ctx, roomID)
+
+		if err == redis.Nil {
+			log.Printf("Room %s not found in Redis\n", roomID)
+			return
+		} else if err != nil {
+			log.Printf("Failed to get room %s from Redis: %v\n", roomID, err)
+			return
+		}
+
+		submission.GameID = gameID
+
+		if err := app.store.Submissions.Create(ctx, submission); err != nil {
+			log.Printf("Failed to create submission for room %s: %v\n", roomID, err)
+			return
+		}
+
+		log.Printf("Created submission for room %s\n", roomID)
+
+	},
+	)
 
 	app.hub = hub
 	

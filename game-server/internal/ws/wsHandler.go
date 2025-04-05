@@ -63,8 +63,7 @@ func (h *Handler) JoinRoom(w http.ResponseWriter, r *http.Request) {
 
 func (h *Hub) handleSubmission(c *Client, msg Message) {
 	if room, ok := h.Rooms[msg.RoomID]; ok {
-		// Simulate submission verification
-		verified, err := hectoc.Verify(msg.Content)
+		verified, err := hectoc.Verify(msg.Content.(string))
 
 		if verified {
 			// Notify both users and end the game
@@ -77,10 +76,17 @@ func (h *Hub) handleSubmission(c *Client, msg Message) {
 				close(cl.Message)
 			}
 			delete(h.Rooms, msg.RoomID)
+		} else if err != nil {
+			// Notify only the submitting user
+			c.Message <- &Message{
+				Type:   MESSAGE_TYPE_ERROR,
+				Content: fmt.Sprintf("Error verifying submission: %v", err),
+				RoomID: msg.RoomID,
+			}
 		} else {
 			// Notify only the submitting user
 			c.Message <- &Message{
-				Type:    MESSAGE_TYPE_ERROR,
+				Type:    MESSAGE_TYPE_WRONG_SUBMISSION,
 				Content: fmt.Sprintf("Incorrect submission. Try again. Error: %v", err),
 				RoomID:  msg.RoomID,
 			}

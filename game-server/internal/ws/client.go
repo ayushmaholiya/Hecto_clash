@@ -17,16 +17,22 @@ type Client struct {
 type MessageType string
 
 const (
-	MESSAGE_TYPE_JOIN   MessageType = "join"
-	MESSAGE_TYPE_LEAVE  MessageType = "leave"
-	MESSAGE_TYPE_SUBMIT MessageType = "submit"
-	MESSAGE_TYPE_END    MessageType = "end"
-	MESSAGE_TYPE_ERROR  MessageType = "error"
+	MESSAGE_TYPE_JOIN_SUCCESS 		MessageType = "join_success"
+	MESSAGE_TYPE_LEAVE  			MessageType = "leave"
+	MESSAGE_TYPE_LEAVE_SUCCESS 		MessageType = "leave_success"
+	MESSAGE_TYPE_OPPONENT_LEFT 		MessageType = "opponent_left"
+	MESSAGE_TYPE_SUBMIT 			MessageType = "submit"
+	MESSAGE_TYPE_ROOM_CREATED 		MessageType = "room_created"
+	MESSAGE_TYPE_ROOM_FULL 			MessageType = "room_full"
+	MESSAGE_TYPE_END    			MessageType = "end"
+	MESSAGE_TYPE_ERROR   			MessageType = "error"
+	MESSAGE_TYPE_WRONG_SUBMISSION  	MessageType = "wrong_submission"
+	MESSAGE_TYPE_PUZZLE_ASSIGN 		MessageType = "puzzle_assign"
 )
 
 type Message struct {
 	Type      MessageType `json:"type"`
-	Content   string      `json:"content"`
+	Content   interface{} `json:"content"`
 	RoomID    string      `json:"roomId"`
 	SenderID  string      `json:"senderId"`
 }
@@ -70,6 +76,10 @@ func (c *Client) readMessage(hub *Hub) {
 		switch msg.Type {
 		case MESSAGE_TYPE_SUBMIT:
 			hub.handleSubmission(c, msg)
+
+		case MESSAGE_TYPE_LEAVE:
+			hub.Unregister <- c
+
 		default:
 			hub.Broadcast <- &msg
 		}

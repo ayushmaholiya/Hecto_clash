@@ -1,5 +1,7 @@
 package ws
 
+import "github.com/eclairjit/hecto-clash-hf/game-server/pkg/hectoc"
+
 type Room struct {
 	ID      string             `json:"id"`
 	Clients map[string]*Client `json:"clients"`
@@ -31,7 +33,7 @@ func (h *Hub) Run() {
                 if len(room.Clients) >= 2 {
                     // Notify the client that the room is full
                     cl.Message <- &Message{
-                        Type:    MESSAGE_TYPE_ERROR,
+                        Type:    MESSAGE_TYPE_ROOM_FULL,
                         Content: "Room is full",
                         RoomID:  cl.RoomID,
                     }
@@ -42,10 +44,23 @@ func (h *Hub) Run() {
                 // Add the client to the room
                 room.Clients[cl.ID] = cl
                 cl.Message <- &Message{
-                    Type:     MESSAGE_TYPE_JOIN,
-                    Content:  "User joined the room",
+                    Type:     MESSAGE_TYPE_JOIN_SUCCESS,
+                    Content:  "Joined the room successfully",
                     RoomID:   cl.RoomID,
-                    SenderID: cl.ID,
+                }
+
+                if len(room.Clients) == 2 {
+                    // assign a puzzle to the clients
+                    hectocSeq := hectoc.Generate()
+
+                    for _, client := range room.Clients {
+                        client.Message <- &Message{
+                            Type:     MESSAGE_TYPE_PUZZLE_ASSIGN,
+                            Content:  hectocSeq,
+                            RoomID:   cl.RoomID,
+                            SenderID: client.ID,
+                        }
+                    }
                 }
             } else {
                 // If the room doesn't exist, create it and add the client
@@ -53,11 +68,11 @@ func (h *Hub) Run() {
                     ID:      cl.RoomID,
                     Clients: map[string]*Client{cl.ID: cl},
                 }
+
                 cl.Message <- &Message{
-                    Type:     MESSAGE_TYPE_JOIN,
-                    Content:  "User joined the room",
+                    Type:     MESSAGE_TYPE_ROOM_CREATED,
+                    Content:  "Room created successfully",
                     RoomID:   cl.RoomID,
-                    SenderID: cl.ID,
                 }
             }
 
@@ -66,20 +81,31 @@ func (h *Hub) Run() {
             if room, ok := h.Rooms[cl.RoomID]; ok {
                 if _, ok := room.Clients[cl.ID]; ok {
                     delete(room.Clients, cl.ID)
+                    
+                    // Notify the client that they have left the room
+                    cl.Message <- &Message{
+                        Type:     MESSAGE_TYPE_LEAVE_SUCCESS,
+                        Content:  "Left the room successfully",
+                        RoomID:   cl.RoomID, 
+                    }
+
                     close(cl.Message)
 
                     // If the room is empty, delete it
                     if len(room.Clients) == 0 {
+                        // If the room is empty, delete it
                         delete(h.Rooms, cl.RoomID)
                     } else {
-                        // Notify other clients in the room
-                        h.Broadcast <- &Message{
-                            Type:     MESSAGE_TYPE_LEAVE,
-                            Content:  "User left the room",
-                            RoomID:   cl.RoomID,
-                            SenderID: cl.ID,
+                       // Notify the remaining client that the other client has left
+                       for _, remainingClient := range room.Clients {
+                            remainingClient.Message <- &Message{
+                                Type:     MESSAGE_TYPE_OPPONENT_LEFT,
+                                Content:  "Your opponent left the room",
+                                RoomID:   cl.RoomID,
+                            }
                         }
                     }
+
                 }
             }
 
@@ -87,9 +113,9 @@ func (h *Hub) Run() {
             // Broadcast messages to all clients in the room except the sender
             if room, ok := h.Rooms[m.RoomID]; ok {
                 for _, cl := range room.Clients {
-                    if cl.ID == m.SenderID {
-                        continue
-                    }
+                    // if cl.ID == m.SenderID {
+                    //     continue
+                    // }
                     cl.Message <- m
                 }
             }

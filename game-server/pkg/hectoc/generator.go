@@ -9,8 +9,8 @@ import (
 const MAX_ATTEMPTS = 100
 
 type Hectoc struct {
-	Problem string
-	Solutions []string
+	Problem 	string 		`json:"problem"`
+	Solutions 	[]string 	`json:"solutions"`
 }
 
 var insertions = []string{"+", "-", "*", "/", "^", "(", ")", ""}

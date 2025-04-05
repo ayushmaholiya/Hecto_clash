@@ -1,6 +1,7 @@
 -- +goose Up
 CREATE TABLE IF NOT EXISTS games (
     id BIGSERIAL PRIMARY KEY,
+    roomId char(6) NOT NULL CHECK (roomId ~ '^[0-9]{6}$'),
     hectoc_puzzle CHAR(6) NOT NULL CHECK (hectoc_puzzle ~ '^[1-9]{6}$'),
     winner_id BIGINT,
     winning_submission TEXT [],

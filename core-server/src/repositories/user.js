@@ -1,86 +1,139 @@
 import getDBConnection from "../utils/dbPool.js";
 
-// Create User 
-const createUser = async (username, email, age, profilePic = null, currentRating = 400) => {
-  let conn;
-  try {
-    conn = await getDBConnection();
-    if (!conn) {
-      throw new Error(`Couldn't connect to the database.`);
-    }
+// Create User
+const createUser = async (username, email, profilePic) => {
+	let conn;
 
-    const result = await conn.query(
-      `INSERT INTO users (username, email, age, profile_pic, current_rating) 
-       VALUES ($1, $2, $3, $4, $5) RETURNING id`, 
-      [username, email, age, profilePic, currentRating]
-    );
+	try {
+		conn = await getDBConnection();
+		if (!conn) {
+			throw new Error(`Couldn't connect to the database.`);
+		}
 
-    return {
-      id: result.rows[0].id,
-      username,
-      email,
-      age,
-      profile_pic: profilePic,
-      current_rating: currentRating,
-    };
-  } catch (err) {
-    console.error(err);
-    throw err;
-  } finally {
-    if (conn) {
-      conn.release(); 
-    }
-  }
+		const result = await conn.query(
+			`INSERT INTO users (username, email, profile_pic) 
+       VALUES ($1, $2, $3) RETURNING id, profile_pic, current_rating`,
+			[username, email, profilePic]
+		);
+
+		return {
+			id: result.rows[0].id,
+			email,
+			username,
+			profile_pic: result.rows[0].profile_pic,
+			current_rating: result.rows[0].current_rating,
+		};
+	} catch (err) {
+		console.error(err);
+		throw err;
+	} finally {
+		if (conn) {
+			conn.release();
+		}
+	}
 };
 
 // Find User by Email
 const findUserByEmail = async (email) => {
-  let conn;
-  try {
-    conn = await getDBConnection();
-    if (!conn) {
-      throw new Error(`Couldn't connect to the database.`);
-    }
+	let conn;
 
-    const result = await conn.query(
-      "SELECT * FROM users WHERE email = $1", 
-      [email]
-    );
+	try {
+		conn = await getDBConnection();
+		if (!conn) {
+			throw new Error(`Couldn't connect to the database.`);
+		}
 
-    return result.rows[0] || null;
-  } catch (err) {
-    console.error(err);
-    return null;
-  } finally {
-    if (conn) {
-      conn.release(); 
-    }
-  }
+		const result = await conn.query("SELECT * FROM users WHERE email = $1", [
+			email,
+		]);
+
+		return result.rows[0] || null;
+	} catch (err) {
+		console.error(err);
+		return null;
+	} finally {
+		if (conn) {
+			conn.release();
+		}
+	}
 };
 
 // Find User by ID
 const findUserById = async (id) => {
-  let conn;
-  try {
-    conn = await getDBConnection();
-    if (!conn) {
-      throw new Error(`Couldn't connect to the database.`);
-    }
+	let conn;
 
-    const result = await conn.query(
-      "SELECT * FROM users WHERE id = $1",
-      [id]
-    );
+	try {
+		conn = await getDBConnection();
+		if (!conn) {
+			throw new Error(`Couldn't connect to the database.`);
+		}
 
-    return result.rows[0] || null;
-  } catch (err) {
-    console.error(err);
-    return null;
-  } finally {
-    if (conn) {
-      conn.release();
-    }
-  }
+		const result = await conn.query(
+			"SELECT id, email, username, profile_pic, current_rating FROM users WHERE id = $1",
+			[id]
+		);
+
+		return result.rows[0];
+	} catch (err) {
+		console.error(err);
+		return null;
+	} finally {
+		if (conn) {
+			conn.release();
+		}
+	}
 };
 
-export { createUser, findUserByEmail, findUserById };
+const storeToken = async (id, token) => {
+	let conn;
+
+	try {
+		conn = await getDBConnection();
+
+		if (!conn) {
+			throw new Error(`Couldn't connect to the database.`);
+		}
+
+		const result = await conn.query(
+			"UPDATE users SET token = ($1) WHERE id = ($2)",
+			[token, id]
+		);
+
+		return result.rows[0];
+	} catch (err) {
+		console.error("Error storing token:", err);
+		return null;
+	} finally {
+		if (conn) {
+			conn.release();
+		}
+	}
+};
+
+const deleteToken = async (id) => {
+	let conn;
+
+	try {
+		conn = await getDBConnection();
+
+		if (!conn) {
+			throw new Error(`Couldn't connect to the database.`);
+		}
+
+		const result = await conn.query(
+			"UPDATE users SET token = NULL WHERE id = ($1)",
+			[id]
+		);
+
+		return result.rows[0];
+	} catch (err) {
+		console.error(err);
+		return null;
+	} finally {
+		if (conn) {
+			conn.release();
+		}
+	}
+};
+
+export { createUser, findUserByEmail, findUserById, storeToken, deleteToken };

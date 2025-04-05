@@ -1,8 +1,9 @@
-import jwt from 'jsonwebtoken';
-import bcrypt from 'bcryptjs';
+import jwt from "jsonwebtoken";
+import conf from "../config/config.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'ayush_maholiya_22je0216_xyz_asdfghjkl';
-const JWT_EXPIRATION = '2d';
+const JWT_SECRET =
+	process.env.JWT_SECRET || "ayush_maholiya_22je0216_xyz_asdfghjkl";
+const JWT_EXPIRATION = "2d";
 
 /*
  * Generate JWT Token
@@ -10,9 +11,9 @@ const JWT_EXPIRATION = '2d';
  * @returns {string} JWT token
  */
 export const generateToken = (payload) => {
-  return jwt.sign(payload, JWT_SECRET, { 
-    expiresIn: JWT_EXPIRATION 
-  });
+	return jwt.sign(payload, conf.jwtSecret, {
+		expiresIn: conf.jwtExpiration,
+	});
 };
 
 /*
@@ -21,31 +22,25 @@ export const generateToken = (payload) => {
  * @returns {Object|false} Decoded token or false if invalid
  */
 export const verifyToken = (token) => {
-  try {
-    return jwt.verify(token, JWT_SECRET);
-  } catch (error) {
-    console.error(`Error verifying JWT token: ${error}`)
-    return null;
-  }
+	return jwt.verify(token, process.env.JWT_SECRET);
 };
 
-/*
- * Hash password
- * @param {string} password - Plain text password
- * @returns {Promise<string>} Hashed password
- */
-export const hashPassword = async (password) => {
-  const salt = await bcrypt.genSalt(10);
-  return bcrypt.hash(password, salt);
-};
+// /*
+//  * Hash password
+//  * @param {string} password - Plain text password
+//  * @returns {Promise<string>} Hashed password
+//  */
+// export const hashPassword = async (password) => {
+// 	const salt = await bcrypt.genSalt(10);
+// 	return bcrypt.hash(password, salt);
+// };
 
-/*
- * Compare password
- * @param {string} inputPassword - Plain text password
- * @param {string} hashedPassword - Hashed password from database
- * @returns {Promise<boolean>} Password match result
- */
-export const comparePassword = async (inputPassword, hashedPassword) => {
-  return bcrypt.compare(inputPassword, hashedPassword);
-};
-
+// /*
+//  * Compare password
+//  * @param {string} inputPassword - Plain text password
+//  * @param {string} hashedPassword - Hashed password from database
+//  * @returns {Promise<boolean>} Password match result
+//  */
+// export const comparePassword = async (inputPassword, hashedPassword) => {
+// 	return bcrypt.compare(inputPassword, hashedPassword);
+// };

@@ -19,6 +19,7 @@
 
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 const app = express();
 
@@ -26,13 +27,18 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
+app.use(cookieParser());
 
 // importing routes
+import healthRoutes from "./routes/health.js";
 import userRoutes from "./routes/user.js";
+import gameRoutes from "./routes/game.js";
 //import leaderBoardRoutes from "./routes/leaderboard.js";
 
 // declaring routes
+app.use("/api/v1/health", healthRoutes);
 app.use("/api/v1/user", userRoutes);
+app.use("/api/v1/game", gameRoutes);
 //app.use("/api/v1/leaderboard", leaderBoardRoutes);
 
 export default app;

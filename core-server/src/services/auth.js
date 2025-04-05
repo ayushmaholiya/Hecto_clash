@@ -14,14 +14,9 @@ const loginOrSignUpUser = async (email, username, profilePic) => {
 			const token = generateToken({
 				id: existingUser.id,
 				email: existingUser.email,
-				type: "user",
 			});
 
-			const result = await storeToken(existingUser.id, token);
-
-			if (!result) {
-				throw new Error("Error storing token");
-			}
+			await storeToken(existingUser.id, token);
 
 			return {
 				user: existingUser,
@@ -37,9 +32,7 @@ const loginOrSignUpUser = async (email, username, profilePic) => {
 			type: "user",
 		});
 
-		const result = await storeToken(newUser.id, token);
-
-		console.log("Token stored successfully:", result);
+		await storeToken(newUser.id, token);
 
 		return {
 			user: newUser,

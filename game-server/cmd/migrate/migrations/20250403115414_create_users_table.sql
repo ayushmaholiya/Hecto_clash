@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR(100) UNIQUE NOT NULL,
     current_rating INT DEFAULT 400 CHECK (current_rating >= 0),
     age INT CHECK (age >= 0),
-    token VARCHAR(255),
+    token TEXT,
     created_at TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 -- +goose StatementEnd

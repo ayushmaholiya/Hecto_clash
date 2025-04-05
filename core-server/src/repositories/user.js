@@ -43,11 +43,12 @@ const findUserByEmail = async (email) => {
 			throw new Error(`Couldn't connect to the database.`);
 		}
 
-		const result = await conn.query("SELECT * FROM users WHERE email = $1", [
-			email,
-		]);
+		const result = await conn.query(
+			"SELECT id, email, username, profile_pic, current_rating FROM users WHERE email = $1",
+			[email]
+		);
 
-		return result.rows[0] || null;
+		return result.rows[0];
 	} catch (err) {
 		console.error(err);
 		return null;

@@ -16,7 +16,7 @@ type Rating struct {
 	CreatedAt string `json:"created_at"`
 }
 
-func (s *RatingStore) Create(ctx context.Context, rating *Rating) error {
+func (s *RatingStore) Create(ctx context.Context, person1Rating *Rating, person2Rating *Rating) error {
 	ratings_table_query := `
 		INSERT INTO ratings (user_id, game_id, rating_after)
 		VALUES ($1, $2, $3);
@@ -39,9 +39,9 @@ func (s *RatingStore) Create(ctx context.Context, rating *Rating) error {
 	result, err := tx.ExecContext(
 		ctx,
 		ratings_table_query,
-		rating.UserID,
-		rating.GameID,
-		rating.RatingAfter,
+		person2Rating.UserID,
+		person2Rating.GameID,
+		person2Rating.RatingAfter,
 	)
 
 	if err != nil {
@@ -58,11 +58,44 @@ func (s *RatingStore) Create(ctx context.Context, rating *Rating) error {
 		return sql.ErrNoRows
 	}
 
+	result, err = tx.ExecContext(
+		ctx,
+		ratings_table_query,
+		person1Rating.UserID,
+		person1Rating.GameID,
+		person1Rating.RatingAfter,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err = result.RowsAffected()
+
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
 	_, err = tx.ExecContext(
 		ctx,
 		users_table_query,
-		rating.RatingAfter,
-		rating.UserID,
+		person1Rating.RatingAfter,
+		person1Rating.UserID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.ExecContext(
+		ctx,
+		users_table_query,
+		person2Rating.RatingAfter,
+		person2Rating.UserID,
 	)
 
 	if err != nil {

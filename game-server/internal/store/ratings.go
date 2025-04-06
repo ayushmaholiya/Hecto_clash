@@ -17,14 +17,28 @@ type Rating struct {
 }
 
 func (s *RatingStore) Create(ctx context.Context, rating *Rating) error {
-	query := `
+	ratings_table_query := `
 		INSERT INTO ratings (user_id, game_id, rating_after)
 		VALUES ($1, $2, $3);
 	`
 
-	result, err := s.db.ExecContext(
+	users_table_query := `
+		UPDATE users
+		SET current_rating = $1
+		WHERE id = $2;
+	`
+
+	tx, err := s.db.BeginTx(ctx, nil)
+
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	result, err := tx.ExecContext(
 		ctx,
-		query,
+		ratings_table_query,
 		rating.UserID,
 		rating.GameID,
 		rating.RatingAfter,
@@ -42,6 +56,21 @@ func (s *RatingStore) Create(ctx context.Context, rating *Rating) error {
 
 	if rowsAffected == 0 {
 		return sql.ErrNoRows
+	}
+
+	_, err = tx.ExecContext(
+		ctx,
+		users_table_query,
+		rating.RatingAfter,
+		rating.UserID,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
 	}
 
 	return nil

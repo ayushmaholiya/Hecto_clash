@@ -16,7 +16,7 @@ type Rating struct {
 	CreatedAt string `json:"created_at"`
 }
 
-func (s *RatingStore) Create(ctx context.Context, person1Rating *Rating, person2Rating *Rating) error {
+func (s *RatingStore) UpdateRatings(ctx context.Context, person1Rating *Rating, person2Rating *Rating) error {
 	ratings_table_query := `
 		INSERT INTO ratings (user_id, game_id, rating_after)
 		VALUES ($1, $2, $3);
@@ -107,4 +107,36 @@ func (s *RatingStore) Create(ctx context.Context, person1Rating *Rating, person2
 	}
 
 	return nil
+}
+
+func (s *RatingStore) GetRatingByID(ctx context.Context, userID int64) (int, error) {
+	query := `
+		SELECT current_rating AS rating from users
+		WHERE id = $1;
+	`
+
+	rows, err := s.db.QueryContext(ctx, query, userID)
+
+	if err != nil {
+		return -1, err
+	}
+
+	defer rows.Close()
+
+	if !rows.Next() {
+		return -1, sql.ErrNoRows
+	}
+
+	var rating int
+
+	if err := rows.Scan(&rating); err != nil {
+		return -1, err
+	}
+
+	if err := rows.Err(); err != nil {
+		return -1, err
+	}
+
+	return rating, nil
+	
 }

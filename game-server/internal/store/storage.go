@@ -27,7 +27,8 @@ type Storage struct {
 	}
 
 	Ratings interface {
-		Create(context.Context, *Rating, *Rating) error
+		UpdateRatings(context.Context, *Rating, *Rating) error
+		GetRatingByID(context.Context, int64) (int, error)
 	}
 }
 
